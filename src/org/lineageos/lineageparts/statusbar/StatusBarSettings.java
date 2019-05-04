@@ -18,6 +18,7 @@ package org.lineageos.lineageparts.statusbar;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceCategory;
@@ -97,6 +98,7 @@ public class StatusBarSettings extends SettingsPreferenceFragment
 
         mStatusBarBatteryShowPercent =
                 (LineageSystemSettingListPreference) findPreference(STATUS_BAR_SHOW_BATTERY_PERCENT);
+       mStatusBarBatteryShowPercent.setOnPreferenceChangeListener(this);
         mStatusBarBattery =
                 (LineageSystemSettingListPreference) findPreference(STATUS_BAR_BATTERY_STYLE);
         mStatusBarBattery.setOnPreferenceChangeListener(this);
@@ -174,12 +176,24 @@ public class StatusBarSettings extends SettingsPreferenceFragment
             case STATUS_BAR_BATTERY_STYLE:
                 enableStatusBarBatteryDependents(value);
                 break;
+            case STATUS_BAR_SHOW_BATTERY_PERCENT:
+                batteryPercentPref(value);
         }
         return true;
     }
 
+    private void batteryPercentPref(int value) {
+            Settings.System.putIntForUser(getContentResolver(),
+                    Settings.System.SHOW_BATTERY_PERCENT, value,
+                    UserHandle.USER_CURRENT);
+    }
+
     private void enableStatusBarBatteryDependents(int batteryIconStyle) {
-        mStatusBarBatteryShowPercent.setEnabled(batteryIconStyle != STATUS_BAR_BATTERY_STYLE_TEXT);
+            Settings.Secure.putIntForUser(getContentResolver(),
+                    Settings.Secure.STATUS_BAR_BATTERY_STYLE, batteryIconStyle,
+                    UserHandle.USER_CURRENT);
+            boolean hideForcePercentage = batteryIconStyle == 5 || batteryIconStyle == 6;/*text or hidden style*/
+            mStatusBarBatteryShowPercent.setEnabled(!hideForcePercentage);
     }
 
     private void updateQuickPulldownSummary(int value) {
